@@ -1,0 +1,455 @@
+[org 0x100]
+
+jmp start
+Message:	db 'Calculator '	; string to be printed
+length:		dw 11
+Message0:	db 'num1=  10   num2=  3 '	; string to be printed
+length0:		dw 21	
+Message1:	db 'Sum : '	; string to be printed
+length1:		dw 6	
+Message2:	db 'Sub : '	; string to be printed
+Message3:	db 'Mul : '	; string to be printed
+Message4:	db 'Div : '	; string to be printed
+Message5:	db 'Exp : '	; string to be printed
+Message6:	db 'Rem : '	; string to be printed
+Message7:	db 'Shl 10: '	; string to be printed
+Message8:	db 'Shr 03: '	; string to be printed
+length2:		dw 8
+Message9:	db 'Per : '	; string to be printed
+Message10:	db 'Fac 03: '	; string to be printed
+; Subroutine to clear the screen
+clrscr:
+    push es
+    push ax
+    push di
+
+    mov ax, 0xB800
+    mov es, ax ; Point ES to video memory
+
+    mov di, 0 ; Start at the top-left corner
+clear_loop:
+    mov word [es:di], 0x0720 ; Write a blank space (0x20) with attribute 7 			;(light gray)
+    add di, 2
+    cmp di, 4000 ; Check if we've reached the end of the screen
+    jne clear_loop
+
+    pop di
+    pop ax
+    pop es
+    ret
+
+; Subroutine to print a number at the top-left corner of the screen
+printNum1:
+    push bp
+    mov bp, sp
+    push es
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+
+    mov ax, 0xB800
+    mov es, ax
+
+    mov ax, [bp+6] ; Load the number to be printed
+    mov bx, 10     ; Base for division
+
+    ; Convert the number to a string of digits (stored on the stack)
+    mov cx, 0      ; Digit counter
+digit_loop:
+    xor dx, dx     ; Clear DX for division
+    div bx         ; AX / BX, remainder in DX
+    add dl, 0x30    ; Convert remainder to ASCII
+    push dx        ; Store the digit on the stack
+    inc cx         ; Increment digit count
+    cmp ax, 0      ; If quotient is not zero, continue
+    jnz digit_loop
+
+    ; Print the digits (in reverse order)
+    mov di, [bp+4]
+print_loop:
+    pop dx         ; Retrieve the digit
+    mov dh, 0x07   ; Attribute byte (light gray)
+    mov [es:di], dx ; Write character and attribute to video memory
+    add di, 2      ; Move to the next character position
+    loop print_loop
+
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    pop es
+    pop bp
+    ret 4
+
+
+
+printStr:	        push bp
+			mov  bp, sp
+			push es
+			push ax
+			push cx
+			push si
+			push di
+			
+			mov ax, 0xb800
+			mov es, ax			; point es to video base
+			mov al, 80			; load al with columns per row
+			mul byte [bp+10]	; multiply with y position
+			add ax, [bp+12]		; add x position
+			shl ax, 1			; turn into byte offset
+			mov di, ax			; point di to required location
+			mov si, [bp+6]		; point si to string
+			mov cx, [bp+4]		; load length of string
+			mov ah, [bp+8]		; load attribute in ah
+			
+								; auto increment mode
+nextChar		mov al,[si]		; load next char in al
+			mov [es:di],ax
+			add di,2			; print char/attribute pair
+			add si,1
+			loop nextChar		; repeat for whole string
+			
+			pop di
+			pop si
+			pop cx
+			pop ax
+			pop es
+			pop bp
+			ret 10
+
+Addition:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	mov ax,[bp+6]
+	mov bx,[bp+4]
+        add ax, bx
+	push ax
+	mov ax,510
+	push ax 
+	call printNum1
+	pop ax
+	pop bx
+	pop bp
+	ret 
+Subtraction:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	mov ax,[bp+6]
+	mov bx,[bp+4]
+        sub ax, bx
+	push ax
+	mov ax,670
+	push ax
+	call printNum1
+	pop ax
+	pop bx
+	pop bp
+	ret
+Multiplication:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	mov ax,[bp+6]
+	mov bx,[bp+4]
+        mul bx
+	push ax
+	mov ax,830
+	push ax
+	call printNum1
+	pop ax
+	pop bx
+	pop bp
+	ret
+Division:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	push cx
+	push dx
+	mov ax,[bp+6]
+	mov bx,[bp+4]
+	div bx
+	push ax
+	mov ax,990
+	push ax
+	call printNum1
+	pop ax
+	pop dx
+	pop cx
+	pop bx
+	pop bp
+	ret
+Exponential:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	push cx
+	mov ax,[bp+6]
+	mov cx,[bp+4]
+	mov bx,ax
+loop1:
+	dec cx
+	mul bx
+	cmp cx,1
+	jg loop1
+	
+	push ax
+	mov ax,1150
+	push ax
+	call printNum1
+	pop ax
+	pop cx
+	pop bx
+	pop bp
+	ret
+
+Modulus:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	push dx
+	mov ax,[bp+6]
+	mov bx,[bp+4]
+	xor dx,dx
+	div bx
+	mov ax,dx
+	push ax
+	mov ax,1310
+	push ax
+	call printNum1
+	pop dx
+	pop bx
+	pop ax
+	pop bp
+	ret
+
+Shifting:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	mov ax,[bp+6]
+	mov bx,[bp+4]
+	shl ax,1
+	push ax 
+	mov ax,1470
+	push ax
+	call printNum1
+	shr bx,1
+	mov ax,bx
+	push ax
+	mov ax,1630
+	push ax
+	call printNum1
+	pop ax
+	pop bx
+	pop bp
+	ret
+percentage:
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	mov ax,[bp+4]
+	mov bx,100
+	mul bx
+	mov bx,[bp+6]
+	div bx
+	push ax
+	mov ax,1790
+	push ax
+	call printNum1
+	pop ax
+	pop bx
+	pop bp
+	ret
+
+Factorial:
+	push bp
+	mov bp,sp
+	push ax
+	
+	push cx
+	mov ax,[bp+4]
+	mov cx,ax
+	
+   l1:  
+	dec cx
+	mul cx
+	cmp cx,1
+	jg l1
+
+	push ax
+	mov ax,1950
+	push ax
+	call printNum1
+	pop ax
+	pop cx
+
+	pop bp
+	ret
+start:
+        call clrscr
+
+	mov  ax, 30		
+	push ax				; push x position
+	mov  ax, 1
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message
+	push ax				; push address of message
+	push word[length]	; push message length
+	call printStr
+        
+	mov  ax, 10		
+	push ax				; push x position
+	mov  ax, 2
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message0
+	push ax				; push address of message  
+	push word[length0]	; push message length
+	call printStr	
+
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 3
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message1
+	push ax				; push address of message
+	push word[length1]	; push message length
+	call printStr	
+
+
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 4
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message2
+	push ax				; push address of message
+	push word[length1]	; push message length
+	call printStr
+
+
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 5
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message3
+	push ax				; push address of message
+	push word[length1]	; push message length
+	call printStr
+
+
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 6
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message4
+	push ax				; push address of message
+	push word[length1]	; push message length
+	call printStr
+
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 7
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message6
+	push ax				; push address of message
+	push word[length1]	; push message length
+	call printStr
+
+
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 8
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message5
+	push ax				; push address of message
+	push word[length1]	; push message length
+	call printStr
+	
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 9
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message7
+	push ax				; push address of message
+	push word[length2]	; push message length
+	call printStr
+	
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 10
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message8
+	push ax				; push address of message
+	push word[length2]	; push message length
+	call printStr
+	
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 11
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message9
+	push ax				; push address of message
+	push word[length1]	; push message length
+	call printStr
+	
+	mov  ax, 5		
+	push ax				; push x position
+	mov  ax, 12
+	push ax				; push y position
+	mov  ax, 0x07			; blue on black background
+	push ax	
+	mov  ax, Message10
+	push ax				; push address of message
+	push word[length2]	; push message length
+	call printStr
+
+	mov ax,10
+        push ax
+	mov ax,3
+	push ax
+	call Addition 
+       	call Subtraction
+	call Multiplication
+	call Division
+	call Exponential
+        call Modulus
+	call Shifting	
+	call percentage
+	call Factorial
+        mov ax, 0x4C00
+        int 0x21
