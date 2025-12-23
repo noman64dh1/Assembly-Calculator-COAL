@@ -47,8 +47,11 @@ Learning Outcomes**
 
 **Authors**
 Noman Ali
+
 Muneeb Asim
+
 M.Awais 
+
 BS Information Technology  
 COAL Project
 
